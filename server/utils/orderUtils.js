@@ -1,5 +1,8 @@
 import Order from "../models/Order.js";
 import Product from "../models/Product.js";
+import Cart from "../models/Cart.js";
+import { NotFoundError } from "./error.js";
+import OrderStatus from "../models/OrderStatus.js";
 
 export async function calculateOrderTotals(items) {
   const productIds = items.map((item) => item.product);
@@ -54,4 +57,64 @@ export async function updateProductStocks(order, action = "decrement") {
     },
   }));
   await Product.bulkWrite(operations);
+}
+
+export async function createOrderFromItems(
+  userId,
+  items,
+  shippingAddressId,
+  paymentMethodId
+) {
+  const orderData = await calculateOrderTotals(items);
+  const pendingStatus = await OrderStatus.findOne({ name: "pending_payment" });
+  const order = new Order({
+    orderNumber: await generateOrderNumber(),
+    customer: userId,
+    items: orderData.items,
+    shippingAddress: shippingAddressId,
+    ...orderData,
+    paymentMethod: paymentMethodId,
+    currentStatus: pendingStatus._id,
+    statusHistory: [
+      {
+        status: pendingStatus._id,
+        notes: "Order created from Cart",
+        changedBy: userId,
+      },
+    ],
+  });
+  await Order.save();
+  await updateProductStocks(Order, "decrement");
+  return order;
+}
+
+export async function convertCartToOrder(
+  cartId,
+  userId,
+  shippingAddressId,
+  paymentMethodId
+) {
+  const cart = await Cart.findById(cartId);
+  if (!cart || cart.user.toString() !== userId.toString()) {
+    throw new NotFoundError("Invalid Cart");
+  }
+  const validatedItems = cart.items.map((item) => {
+    if (item.quantity > item.product.stocks) {
+      throw new Error(`Insufficient stocks for ${item.product.title} `);
+    }
+    return {
+      product: item.product._id,
+      quantity: item.quantity,
+      priceAtPurchase: item.priceAtAddition,
+    };
+  });
+  const order = await createOrderFromItems(
+    userId,
+    items,
+    shippingAddressId,
+    paymentMethodId
+  );
+  cart.items = [];
+  await cart.save();
+  return order;
 }
