@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-export const productSchema = new mongoose.Schema(
+const productSchema = new mongoose.Schema(
   {
     // id {  title, price, imageURL, description, category, tags, stocks, isActive, createdBy, timestamps }
     title: {
@@ -31,7 +31,13 @@ export const productSchema = new mongoose.Schema(
     stocks: {
       type: Number,
       default: 0,
+      min: 0,
     },
+    lowStockThreshold: {
+      type: Number,
+      default: 5,
+    },
+    lastRestocked: Date,
     isActive: {
       type: Boolean,
       default: true,
@@ -46,5 +52,7 @@ export const productSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+productSchema.index({ stocks: 1 });
+productSchema.index({ lastRestocked: 1 });
 const Product = mongoose.model("Product", productSchema);
 export default Product;
