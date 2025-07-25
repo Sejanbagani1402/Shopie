@@ -76,4 +76,27 @@ export const processRefund = async (req, res) => {
     });
   }
 };
-export const getPaymentStatus = async (req, res) => {};
+export const getPaymentStatus = async (req, res) => {
+  try {
+    const { paymentId } = req.params;
+    const payment = await Payment.findById(paymentId)
+      .populate("order")
+      .populate("user", "name email");
+    if (!payment) {
+      throw new NotFoundError("Payment not found");
+    }
+    const paymentIntent = await stripe.paymentIntents.retrieve(
+      payment.paymentIntentId
+    );
+    if (paymentIntent.status !== payment.status) {
+      payment.status = paymentIntent.status;
+      await payment.save();
+    }
+    res.json(payment);
+  } catch (error) {
+    res.status(error.statusCode || 500).json({
+      message: error.message,
+      ...(error.details && { details: error.details }),
+    });
+  }
+};
