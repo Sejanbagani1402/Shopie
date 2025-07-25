@@ -12,7 +12,7 @@ export async function calculateOrderTotals(items) {
   }
   let subtotal = 0;
   const validatedItems = items.map((item) => {
-    const product = products.find((p) => p._id.equals(items.product));
+    const product = products.find((p) => p._id.equals(item.product));
     if (!product) throw new Error(`Product ${items.product} not found`);
     if (product.stocks < item.quantity) {
       throw new Error(`Insufficient stock for product ${product.title}`);
@@ -83,7 +83,7 @@ export async function createOrderFromItems(
       },
     ],
   });
-  await Order.save();
+  await order.save();
   await updateProductStocks(Order, "decrement");
   return order;
 }
@@ -110,7 +110,7 @@ export async function convertCartToOrder(
   });
   const order = await createOrderFromItems(
     userId,
-    items,
+    validatedItems,
     shippingAddressId,
     paymentMethodId
   );

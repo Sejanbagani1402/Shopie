@@ -1,23 +1,17 @@
 import Order from "../models/Order.js";
-import Product from "../models/Product.js";
-import mongoose from "mongoose";
-import Customer from "../models/Customer.js";
 import OrderStatus from "../models/OrderStatus.js";
-import {
-  createOrderValidator,
-  updateStatusValidator,
-} from "../validators/orderValidator.js";
+import { createOrderValidator } from "../validators/orderValidator.js";
 
-import {
-  validateOrderOwnership,
-  validateShippingAddress,
-} from "../middlewares/orderMiddleware.js";
+import { validateShippingAddress } from "../middlewares/orderMiddleware.js";
 
 import {
   calculateOrderTotals,
+  convertCartToOrder,
   generateOrderNumber,
   updateProductStocks,
 } from "../utils/orderUtils.js";
+
+import { NotFoundError } from "../utils/errors.js";
 
 export const createOrder = [
   createOrderValidator,
@@ -32,6 +26,7 @@ export const createOrder = [
       });
 
       const order = new Order({
+        orderNumber: generateOrderNumber(),
         customer: customerId,
         items: orderData.items,
         shippingAddress: shippingAddressId,
@@ -45,6 +40,7 @@ export const createOrder = [
           {
             status: pendingStatus._id,
             notes: "Order Created",
+            changedBy: req.user._id,
           },
         ],
       });
@@ -56,14 +52,20 @@ export const createOrder = [
     }
   },
 ];
-
-async function calculateOrderTotals(items) {
-  const subtotal = items.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0
-  );
-  const shippingFee = 10;
-  const tax = subtotal * 0.08;
-  const total = subtotal + tax + shippingFee;
-  return { items, subtotal, shippingFee, tax, total };
-}
+export const checkoutCart = [
+  validateShippingAddress,
+  async (req, res) => {
+    try {
+      const { shippingAddressId, paymentMethodId } = req.body;
+      const order = await convertCartToOrder(
+        req.cart._id,
+        req.user._id,
+        shippingAddressId,
+        paymentMethodId
+      );
+      res.status(201).json(order);
+    } catch (error) {
+      next(error);
+    }
+  },
+];
