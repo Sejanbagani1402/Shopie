@@ -9,7 +9,7 @@ export const createProductValidator = [
   body("price")
     .isFloat({ min: 0 })
     .withMessage("Price of product must be positive number."),
-  body("imageUrl").isURL().withMessage("Please provide a valid image URL."),
+  body("imageURL").isURL().withMessage("Please provide a valid image URL."),
   body("description")
     .optional()
     .trim()
@@ -26,8 +26,11 @@ export const createProductValidator = [
     .isArray()
     .withMessage("The tags must be an array")
     .custom((tags) => {
-      if (!mongoose.Types.ObjectId.isValid(tags)) {
-        throw new Error("Invalid product tag");
+      const allValid = tags.every((tagId) =>
+        mongoose.Types.ObjectId.isValid(tagId)
+      );
+      if (!allValid) {
+        throw new Error("One or more tag IDs are invalid.");
       }
       return true;
     }),

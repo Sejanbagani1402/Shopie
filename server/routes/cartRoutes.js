@@ -14,29 +14,36 @@ import {
   removeCartItemValidator,
 } from "../validators/cartValidators.js";
 
-import { validate } from "../middlewares/validation.js";
-import { auth } from "../middlewares/auth.js";
+import { handleValidationErrors } from "../middlewares/validation.js";
+import { authenticate } from "../middlewares/auth.js";
 import { getOrCreateCart, validateCartItem } from "../middlewares/cart.js";
 
 const router = express.Router();
 
-router.use(auth);
+router.use(authenticate);
 router.use(getOrCreateCart);
 
 router.get("/", getCart);
 
 router.post(
   "/items",
-  validate(addToCartValidator),
+  addToCartValidator,
+  handleValidationErrors,
   validateCartItem,
   addToCart
 );
 
-router.put("/items/:itemId", validate(updateCartItemValidator), updateCartItem);
+router.put(
+  "/items/:itemId",
+  updateCartItemValidator,
+  handleValidationErrors,
+  updateCartItem
+);
 
 router.delete(
   "/items/:itemId",
-  validate(removeCartItemValidator),
+  removeCartItemValidator,
+  handleValidationErrors,
   removeCartItem
 );
 

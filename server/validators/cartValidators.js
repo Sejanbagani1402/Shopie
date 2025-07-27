@@ -1,4 +1,4 @@
-import { body, params } from "express-validator";
+import { body, param } from "express-validator";
 import mongoose from "mongoose";
 
 export const addToCartValidator = [

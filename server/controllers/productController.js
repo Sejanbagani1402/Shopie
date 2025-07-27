@@ -96,7 +96,7 @@ export const getProductById = async (req, res) => {
 
 export const createProduct = async (req, res) => {
   try {
-    const { title, price, imageUrl, description, category, tags, stock } =
+    const { title, price, imageURL, description, category, tags, stock } =
       req.body;
     const categoryExists = await Category.findById(category);
     if (!categoryExists) {
@@ -116,7 +116,7 @@ export const createProduct = async (req, res) => {
     const product = new Product({
       title,
       price,
-      imageUrl,
+      imageURL,
       description,
       category,
       tags: tags || [],

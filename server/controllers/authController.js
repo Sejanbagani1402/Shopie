@@ -7,7 +7,7 @@ import {
 
 export const register = async (req, res) => {
   try {
-    const { username, email, password } = req.body;
+    const { username, email, password, role } = req.body;
     const existingUser = await User.findOne({ $or: [{ email }, { username }] });
     if (existingUser) {
       return res.status(400).json({
@@ -15,7 +15,7 @@ export const register = async (req, res) => {
         message: "User already exists. Try other email or username.",
       });
     }
-    const user = new User({ username, email, password });
+    const user = new User({ username, email, password, role: role || "user" });
     await user.save();
     // Return response without password
     const userResponse = user.toObject();
@@ -36,7 +36,7 @@ export const register = async (req, res) => {
       message: "Registration Completed!",
       data: {
         user: {
-          id: user._id,
+          userId: user._id,
           username: user.username,
           email: user.email,
           role: user.role,
