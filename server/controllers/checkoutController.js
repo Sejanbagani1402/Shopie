@@ -1,5 +1,6 @@
 import Stripe from "stripe";
 import dotenv from "dotenv";
+import Order from "../models/Order.js";
 import { v4 as uuidv4 } from "uuid";
 
 dotenv.config();
@@ -8,6 +9,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 export const createCheckoutSession = async (req, res) => {
   try {
     const { cart } = req.body;
+    const orderId = uuidv4();
 
     const line_items = cart.map((product) => ({
       price_data: {
@@ -21,8 +23,12 @@ export const createCheckoutSession = async (req, res) => {
       },
       quantity: product.quantity,
     }));
-
-    const orderId = uuidv4();
+    await Order.create({
+      _id: orderId,
+      user: req.user?._id,
+      items: cart,
+      status: "pending",
+    });
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
@@ -32,6 +38,7 @@ export const createCheckoutSession = async (req, res) => {
       cancel_url: `http://localhost:5173/canceled`,
       metadata: {
         orderId,
+        userId: req.user?._id.toString() || "guest",
       },
     });
 

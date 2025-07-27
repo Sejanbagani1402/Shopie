@@ -14,6 +14,7 @@ import categoryRoutes from "./routes/categoryRoutes.js";
 import tagRoutes from "./routes/tagRoutes.js";
 import checkoutRoutes from "./routes/checkoutRoutes.js";
 import cartRoutes from "./routes/cartRoutes.js";
+import webhookRoutes from "./routes/webhookRoutes.js";
 import { version } from "mongoose";
 
 const app = express();
@@ -47,6 +48,7 @@ app.use("/api/v1/categories", categoryRoutes);
 app.use("/api/v1/tags", tagRoutes);
 app.use("/api/v1/checkout", checkoutRoutes);
 app.use("/api/v1/cart", cartRoutes);
+app.use("/api/v1/webhook", webhookRoutes);
 
 app.use(errorHandler);
 
