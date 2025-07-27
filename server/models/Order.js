@@ -23,10 +23,6 @@ const orderItemSchema = new mongoose.Schema({
 
 export const orderSchema = new mongoose.Schema(
   {
-    //orderNumber, customer, items, shippingAddress, subtotal, tax,
-    // shippingFee, discount, paymentMethod, paymentStatus, transactionId,
-    // statusHistory, currentStatus, notes, isActive
-
     orderNumber: {
       type: String,
       required: true,

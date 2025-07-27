@@ -1,7 +1,8 @@
 import Order from "../models/Order.js";
 import OrderStatus from "../models/OrderStatus.js";
+import Customer from "../models/Customer.js";
+import PaymentMethod from "../models/PaymentMethod.js";
 import { createOrderValidator } from "../validators/orderValidator.js";
-
 import { validateShippingAddress } from "../middlewares/orderMiddleware.js";
 
 import {
@@ -18,23 +19,34 @@ export const createOrder = [
   validateShippingAddress,
   async (req, res, next) => {
     try {
-      const { customerId, items, shippingAddressId, paymentMethodId } =
-        req.body;
+      const { items, shippingAddressId, paymentMethod } = req.body;
+      const customer = req.customer;
       const orderData = await calculateOrderTotals(items);
-      const pendingStatus = await OrderStatus.findOne({
+      let pendingStatus = await OrderStatus.findOne({
         name: "pending_payment",
       });
+      const method = await PaymentMethod.findOne({ name: paymentMethod });
+      if (!paymentMethod) {
+        throw new NotFoundError("Payment method 'card' not found");
+      }
+      if (!pendingStatus) {
+        // Create it if missing (fallback)
+        pendingStatus = await OrderStatus.create({
+          name: "pending_payment",
+          description: "Waiting for payment",
+        });
+      }
 
       const order = new Order({
-        orderNumber: generateOrderNumber(),
-        customer: customerId,
+        orderNumber: await generateOrderNumber(),
+        customer: customer._id,
         items: orderData.items,
         shippingAddress: shippingAddressId,
         subtotal: orderData.subtotal,
         tax: orderData.tax,
         shippingFee: orderData.shippingFee,
         total: orderData.total,
-        paymentMethod: paymentMethodId,
+        paymentMethod: method._id,
         currentStatus: pendingStatus._id,
         statusHistory: [
           {
@@ -44,9 +56,12 @@ export const createOrder = [
           },
         ],
       });
-      await Order.save();
+      await order.save();
       await updateProductStocks(order, "decrement");
-      return res.status(201).json(order);
+      res.status(201).json({
+        success: true,
+        order,
+      });
     } catch (error) {
       next(error);
     }
@@ -54,7 +69,7 @@ export const createOrder = [
 ];
 export const checkoutCart = [
   validateShippingAddress,
-  async (req, res) => {
+  async (req, res, next) => {
     try {
       const { shippingAddressId, paymentMethodId } = req.body;
       const order = await convertCartToOrder(
@@ -69,3 +84,23 @@ export const checkoutCart = [
     }
   },
 ];
+
+export const getOrderDetails = async (req, res) => {
+  try {
+    const { orderId, customerId } = req.params;
+    const order = await Order.findOne({ _id: orderId, customer: customerId })
+      .populate("currenTStatus", "name description")
+      .populate("items.product", "title price imageURL")
+      .populate("paymentMethod", "name")
+      .populate({
+        paths: "statusHistory.status",
+        select: "name description",
+      });
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+    res.json(order);
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};

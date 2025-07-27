@@ -52,8 +52,8 @@ const paymentSchema = new mongoose.Schema(
       required: true,
     },
     paymentMethod: {
-      type: String,
-      enum: ["card", "bank_transfer", "wallet", "other"],
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "PaymentMethod",
       required: true,
     },
     refunds: [refundSchema],

@@ -5,42 +5,56 @@ import OrderStatus from "../models/OrderStatus.js";
 
 export const validateOrderOwnership = async (req, res, next) => {
   try {
-    const { orderId, customerId } = req.params;
+    const { orderId } = req.params;
     const order = await Order.findById(orderId);
-    if (!orderId) {
+    if (!order) {
       throw new NotFoundError("Order not found");
     }
     if (req.user.role === "admin") {
       req.order = order;
       return next();
     }
-    if (order.customer.toString() !== customerId) {
+    //
+    const customer = await Customer.findOne({ user: req.user._id });
+    if (!customer) {
+      throw new NotFoundError("Customer profile not found");
+    }
+
+    if (order.customer.toString() !== customer._id.toString()) {
       throw new ForbiddenError(
         "You don't have permission to access this order"
       );
     }
+
     req.order = order;
     next();
   } catch (error) {
     next(error);
   }
 };
-export const validateShippingAddress = async (req, res) => {
+export const validateShippingAddress = async (req, res, next) => {
   try {
     const { shippingAddressId, customerId } = req.body;
-    const customer = await Customer.findById(customerId);
+    const customer = await Customer.findOne({ user: req.user._id });
     if (!customer) {
       throw new NotFoundError("Customer not found");
     }
-    const addressExists = customer.shippingAddresses.some(
-      (addr) => addr._id.toString() === shippingAddressId
-    );
-    if (!addressExists) {
-      throw new NotFoundError("Shipping address not found for this customer");
+    if (shippingAddressId) {
+      const addressExists = customer.shippingAddresses.some(
+        (addr) => addr._id.toString() === shippingAddressId
+      );
+
+      if (!addressExists) {
+        throw new NotFoundError("Shipping address not found for this customer");
+      }
     }
+
+    req.customer = customer;
+
     next();
   } catch (error) {
-    next(error);
+    console.log(error);
+    next();
   }
 };
 export const checkOrderStatus = (allowedStatuses) => {

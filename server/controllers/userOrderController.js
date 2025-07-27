@@ -1,5 +1,5 @@
-import Order from "../models/Order";
-import OrderStatus from "../models/OrderStatus";
+import Order from "../models/Order.js";
+import OrderStatus from "../models/OrderStatus.js";
 
 export const getUserOrders = async (req, res) => {
   try {
@@ -30,25 +30,5 @@ export const getUserOrders = async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
-  }
-};
-
-export const getOrderDetails = async (req, res) => {
-  try {
-    const { orderId, customerId } = req.params;
-    const order = await Order.findOne({ _id: orderId, customer: customerId })
-      .populate("currenStatus", "name description")
-      .populate("items.product", "title price imageURL")
-      .populate("paymentMethod", "name")
-      .populate({
-        paths: "statusHistory.status",
-        select: "name description",
-      });
-    if (!order) {
-      return res.status(404).json({ message: "Order not found" });
-    }
-    res.json(order);
-  } catch (error) {
-    return res.status(500).json({ message: error.message });
   }
 };

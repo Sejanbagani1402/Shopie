@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
+
 export const customerSchema = new mongoose.Schema(
   {
-    // user, shippingAddress, billingAddress, email, phone,  preferences, loyaltyPoints
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -10,30 +10,12 @@ export const customerSchema = new mongoose.Schema(
     },
     shippingAddresses: [
       {
-        street: {
-          type: String,
-          required: true,
-        },
-        city: {
-          type: String,
-          required: true,
-        },
-        state: {
-          type: String,
-          required: true,
-        },
-        postalCode: {
-          type: String,
-          required: true,
-        },
-        country: {
-          type: String,
-          required: true,
-        },
-        isDefault: {
-          type: Boolean,
-          default: false,
-        },
+        street: { type: String, required: true },
+        city: { type: String, required: true },
+        state: { type: String, required: true },
+        postalCode: { type: String, required: true },
+        country: { type: String, required: true },
+        isDefault: { type: Boolean, default: false },
       },
     ],
     billingAddress: {
@@ -43,34 +25,25 @@ export const customerSchema = new mongoose.Schema(
       postalCode: String,
       country: String,
     },
-    email: {
-      type: String,
-    },
     phone: {
       type: String,
+      validate: {
+        validator: function (v) {
+          return /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/.test(
+            v
+          );
+        },
+        message: (props) => `${props.value} is not a valid phone number!`,
+      },
     },
     preferences: {
-      language: {
-        type: String,
-        default: "en",
-      },
-      currency: {
-        type: String,
-        default: "inr",
-      },
+      language: { type: String, default: "en" },
+      currency: { type: String, default: "inr" },
     },
-    loyaltyPoints: {
-      type: Number,
-      default: 0,
-    },
-    isActive: {
-      type: Boolean,
-      default: true,
-    },
+    loyaltyPoints: { type: Number, default: 0 },
+    isActive: { type: Boolean, default: true },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
 const Customer = mongoose.model("Customer", customerSchema);
