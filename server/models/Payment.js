@@ -1,5 +1,15 @@
 import mongoose from "mongoose";
 
+const refundSchema = new mongoose.Schema(
+  {
+    amount: Number,
+    reason: String,
+    created: Date,
+    status: String,
+  },
+  { _id: false }
+);
+
 const paymentSchema = new mongoose.Schema(
   {
     //order, user, paymentIntentId, amount, currency, status, paymentMethod, refunds, metadata
@@ -46,21 +56,13 @@ const paymentSchema = new mongoose.Schema(
       enum: ["card", "bank_transfer", "wallet", "other"],
       required: true,
     },
-    refunds: [
-      {
-        amount: Number,
-        reason: String,
-        created: Date,
-        status: String,
-      },
-    ],
+    refunds: [refundSchema],
     metadata: mongoose.Schema.Types.Mixed,
   },
   { timestamps: true }
 );
 
-paymentSchema.index({ paymentIntentId: 1 });
-paymentSchema.index({ order: 1 });
+paymentSchema.index({ user: 1, order: 1 });
 paymentSchema.index({ status: 1 });
 const Payment = mongoose.model("Payment", paymentSchema);
 export default Payment;
