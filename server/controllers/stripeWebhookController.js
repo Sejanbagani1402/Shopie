@@ -1,6 +1,6 @@
 import Stripe from "stripe";
 import Payment from "../models/Payment.js";
-import { updateOrderStatus } from "./orderController.js";
+import { updateOrderStatus } from "./orderStatusController.js";
 
 export const handleStripeWebhook = async (req, res) => {
   const sig = req.headers["stripe-signature"];

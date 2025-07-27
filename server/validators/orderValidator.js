@@ -1,4 +1,4 @@
-import { body, params, query } from "express-validator";
+import { body, param, query } from "express-validator";
 import mongoose from "mongoose";
 import OrderStatus from "../models/OrderStatus.js";
 import PaymentMethod from "../models/PaymentMethod.js";
@@ -37,7 +37,7 @@ export const createOrderValidator = [
 ];
 
 export const updateStatusValidator = [
-  params("orderId")
+  param("orderId")
     .notEmpty()
     .withMessage("Order ID is required.")
     .isMongoId()

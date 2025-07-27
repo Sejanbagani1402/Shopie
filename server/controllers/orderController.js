@@ -11,7 +11,7 @@ import {
   updateProductStocks,
 } from "../utils/orderUtils.js";
 
-import { NotFoundError } from "../utils/errors.js";
+import { NotFoundError } from "../utils/error.js";
 
 export const createOrder = [
   createOrderValidator,
